@@ -7,6 +7,7 @@ import javax.persistence.Id;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 @Entity
 public class Producto {
@@ -30,6 +31,12 @@ public class Producto {
     @Min(value = 0, message = "La existencia mínima es 0")
     private Float existencia;
 
+    @NotNull
+    private Boolean apartado = false;
+
+    private LocalDateTime fechaApartado;
+
+    private String apartadoId; // Nuevo campo para el ID de apartado
 
     public Producto(String nombre, String codigo, Float precio, Float existencia, Integer id) {
         this.nombre = nombre;
@@ -99,5 +106,29 @@ public class Producto {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Boolean getApartado() {
+        return apartado;
+    }
+
+    public void setApartado(Boolean apartado) {
+        this.apartado = apartado;
+    }
+
+    public LocalDateTime getFechaApartado() {
+        return fechaApartado;
+    }
+
+    public void setFechaApartado(LocalDateTime fechaApartado) {
+        this.fechaApartado = fechaApartado;
+    }
+
+    public String getApartadoId() {
+        return apartadoId;
+    }
+
+    public void setApartadoId(String apartadoId) {
+        this.apartadoId = apartadoId;
     }
 }

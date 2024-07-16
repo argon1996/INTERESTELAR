@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{master}">
+<head>
+    <title>Productos Apartados</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<main layout:fragment="contenido">
+    <div class="col-12">
+        <h2>Buscar Producto para Apartar</h2>
+        <form action="#" th:action="@{/productos/apartados}" method="get">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" placeholder="Buscar por nombre o código" name="search">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+                </div>
+            </div>
+        </form>
+
+        <div class="table-responsive" th:if="${productos != null}">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Código de Barras</th>
+                    <th>Existencia</th>
+                    <th>Precio</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="producto : ${productos}">
+                    <td th:text="${producto.id}"></td>
+                    <td th:text="${producto.nombre}"></td>
+                    <td th:text="${producto.codigo}"></td>
+                    <td th:text="${producto.existencia}"></td>
+                    <td th:text="${producto.precio}"></td>
+                    <td>
+                        <form th:action="@{/productos/apartar}" method="post">
+                            <input type="hidden" name="id" th:value="${producto.id}"/>
+                            <input type="number" name="cantidad" min="1" th:max="${producto.existencia}" required />
+                            <input type="text" name="nombrePersona" placeholder="Nombre de la persona" required />
+                            <input type="number" name="abonoInicial" min="0" placeholder="Abono inicial" required />
+                            <button type="submit" class="btn btn-primary">Apartar <i class="fa fa-shopping-cart"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2>Productos Apartados</h2>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Código de Barras</th>
+                    <th>Precio</th>
+                    <th>Cantidad Apartada</th>
+                    <th>Fecha de Apartado</th>
+                    <th>Persona</th>
+                    <th>Abono Inicial</th>
+                    <th>Total Abonado</th>
+                    <th>Fecha Último Abono</th>
+                    <th>Abono Pendiente</th>
+                    <th>Estado</th>
+                    <th>Abonar</th>
+                    <th>Retirar</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="productoApartado : ${apartados}">
+                    <td th:text="${productoApartado.id}"></td>
+                    <td th:text="${productoApartado.producto.nombre}"></td>
+                    <td th:text="${productoApartado.producto.codigo}"></td>
+                    <td th:text="${productoApartado.producto.precio}"></td>
+                    <td th:text="${productoApartado.cantidad}"></td>
+                    <td th:text="${#temporals.format(productoApartado.fechaApartado, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                    <td th:text="${productoApartado.nombrePersona}"></td>
+                    <td th:text="${productoApartado.abonoInicial}"></td>
+                    <td th:text="${productoApartado.totalAbono}"></td>
+                    <td th:text="${#temporals.format(productoApartado.fechaUltimoAbono, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                    <td th:text="${productoApartado.abonoPendiente}"></td>
+                    <td th:text="${productoApartado.estado}"></td>
+                    <td>
+                        <form th:action="@{/productos/abonar}" method="post">
+                            <input type="hidden" name="id" th:value="${productoApartado.id}"/>
+                            <input type="number" name="cantidad" min="1" max="[[${productoApartado.abonoPendiente}]]" placeholder="Cantidad a abonar" required />
+                            <button type="submit" class="btn btn-primary">Abonar</button>
+                        </form>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" onclick="confirmRetirar([[${productoApartado.id}]])">Retirar</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<script>
+    function confirmRetirar(id) {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "¡No podrás revertir esto!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, retíralo'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/productos/retirar?id=' + id;
+            }
+        })
+    }
+</script>
+</body>
+</html>

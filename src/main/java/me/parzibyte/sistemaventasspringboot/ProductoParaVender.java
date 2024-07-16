@@ -8,11 +8,6 @@ public class ProductoParaVender extends Producto {
         this.cantidad = cantidad;
     }
 
-    public ProductoParaVender(String nombre, String codigo, Float precio, Float existencia, Float cantidad) {
-        super(nombre, codigo, precio, existencia);
-        this.cantidad = cantidad;
-    }
-
     public void aumentarCantidad() {
         this.cantidad++;
     }

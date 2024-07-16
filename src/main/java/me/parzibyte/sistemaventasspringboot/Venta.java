@@ -1,3 +1,6 @@
+/*
+ * Venta
+ */
 package me.parzibyte.sistemaventasspringboot;
 
 import javax.persistence.*;
@@ -25,14 +28,6 @@ public class Venta {
         this.id = id;
     }
 
-    public Float getTotal() {
-        Float total = 0f;
-        for (ProductoVendido productoVendido : this.productos) {
-            total += productoVendido.getTotal();
-        }
-        return total;
-    }
-
     public String getFechaYHora() {
         return fechaYHora;
     }
@@ -40,6 +35,15 @@ public class Venta {
     public void setFechaYHora(String fechaYHora) {
         this.fechaYHora = fechaYHora;
     }
+
+    public double getTotal() {
+        double total = 0;
+        for (ProductoVendido producto : productos) {
+            total += producto.getPrecio() * producto.getCantidad();
+        }
+        return total;
+    }
+    
 
     public Set<ProductoVendido> getProductos() {
         return productos;

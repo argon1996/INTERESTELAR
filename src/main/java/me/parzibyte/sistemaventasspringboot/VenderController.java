@@ -1,5 +1,6 @@
 package me.parzibyte.sistemaventasspringboot;
 
+import me.parzibyte.prueba.CashDrawerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -8,6 +9,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping(path = "/vender")
@@ -18,6 +21,8 @@ public class VenderController {
     private VentasRepository ventasRepository;
     @Autowired
     private ProductosVendidosRepository productosVendidosRepository;
+    @Autowired
+    private CashDrawerService cashDrawerService;
 
     @PostMapping(value = "/quitar/{indice}")
     public String quitarDelCarrito(@PathVariable int indice, HttpServletRequest request) {
@@ -45,44 +50,86 @@ public class VenderController {
     @PostMapping(value = "/terminar")
     public String terminarVenta(HttpServletRequest request, RedirectAttributes redirectAttrs) {
         ArrayList<ProductoParaVender> carrito = this.obtenerCarrito(request);
-        // Si no hay carrito o está vacío, regresamos inmediatamente
         if (carrito == null || carrito.size() <= 0) {
             return "redirect:/vender/";
         }
         Venta v = ventasRepository.save(new Venta());
-        // Recorrer el carrito
+        List<ProductoVendido> productosVendidos = new ArrayList<>();
         for (ProductoParaVender productoParaVender : carrito) {
-            // Obtener el producto fresco desde la base de datos
             Producto p = productosRepository.findById(productoParaVender.getId()).orElse(null);
-            if (p == null) continue; // Si es nulo o no existe, ignoramos el siguiente código con continue
-            // Le restamos existencia
+            if (p == null) continue;
             p.restarExistencia(productoParaVender.getCantidad());
-            // Lo guardamos con la existencia ya restada
             productosRepository.save(p);
-            // Creamos un nuevo producto que será el que se guarda junto con la venta
             ProductoVendido productoVendido = new ProductoVendido(productoParaVender.getCantidad(), productoParaVender.getPrecio(), productoParaVender.getNombre(), productoParaVender.getCodigo(), v);
-            // Y lo guardamos
+            productosVendidos.add(productoVendido);
             productosVendidosRepository.save(productoVendido);
         }
 
-        // Al final limpiamos el carrito
         this.limpiarCarrito(request);
-        // e indicamos una venta exitosa
         redirectAttrs
                 .addFlashAttribute("mensaje", "Venta realizada correctamente")
                 .addFlashAttribute("clase", "success");
+
+        try {
+            cashDrawerService.openDrawer();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return "redirect:/vender/";
     }
 
-    @GetMapping(value = "/")
-    public String interfazVender(Model model, HttpServletRequest request) {
-        model.addAttribute("producto", new Producto());
-        float total = 0;
-        ArrayList<ProductoParaVender> carrito = this.obtenerCarrito(request);
-        for (ProductoParaVender p: carrito) total += p.getTotal();
-        model.addAttribute("total", total);
-        return "vender/vender";
+    
+    @PostMapping("/ventas/imprimir-factura")
+public String imprimirFactura(@RequestParam("id") Integer ventaId, RedirectAttributes redirectAttributes) {
+    try {
+        Optional<Venta> optionalVenta = ventasRepository.findByIdAsInteger(ventaId);
+        if (optionalVenta.isPresent()) {
+            Venta venta = optionalVenta.get();
+            List<ProductoVendido> productosVendidos = productosVendidosRepository.findByVenta(venta);
+            double totalVenta = productosVendidos.stream().mapToDouble(pv -> pv.getPrecio() * pv.getCantidad()).sum();
+
+            cashDrawerService.printFormattedInvoice(productosVendidos, totalVenta);
+
+            redirectAttributes
+                    .addFlashAttribute("mensaje", "Factura impresa correctamente")
+                    .addFlashAttribute("clase", "success");
+        } else {
+            redirectAttributes
+                    .addFlashAttribute("mensaje", "No se encontró la venta")
+                    .addFlashAttribute("clase", "warning");
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        redirectAttributes
+                .addFlashAttribute("mensaje", "Error al imprimir la factura")
+                .addFlashAttribute("clase", "danger");
     }
+    return "redirect:/vender/";
+}
+
+
+
+
+
+
+    
+@GetMapping(value = "/")
+public String interfazVender(Model model, HttpServletRequest request) {
+    model.addAttribute("producto", new Producto());
+    float total = 0;
+    ArrayList<ProductoParaVender> carrito = this.obtenerCarrito(request);
+    for (ProductoParaVender p : carrito) total += p.getTotal();
+    model.addAttribute("total", total);
+
+    List<Venta> ventas = ventasRepository.findAllByOrderByFechaYHoraDesc();
+    model.addAttribute("ventas", ventas);
+
+    return "vender/vender";
+}
+
+
+    
 
     private ArrayList<ProductoParaVender> obtenerCarrito(HttpServletRequest request) {
         ArrayList<ProductoParaVender> carrito = (ArrayList<ProductoParaVender>) request.getSession().getAttribute("carrito");
@@ -95,6 +142,8 @@ public class VenderController {
     private void guardarCarrito(ArrayList<ProductoParaVender> carrito, HttpServletRequest request) {
         request.getSession().setAttribute("carrito", carrito);
     }
+
+
 
     @PostMapping(value = "/agregar")
     public String agregarAlCarrito(@ModelAttribute Producto producto, HttpServletRequest request, RedirectAttributes redirectAttrs) {

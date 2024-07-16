@@ -20,6 +20,9 @@ bootJar {
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/releases/"
+    }
 }
 
 sourceCompatibility = 1.8
@@ -33,14 +36,34 @@ configurations {
 }
 
 dependencies {
-    // https://mvnrepository.com/artifact/nz.net.ultraq.thymeleaf/thymeleaf-layout-dialect
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
+    implementation 'com.fasterxml.jackson.jr:jackson-jr-objects:2.13.0'
     compile group: 'nz.net.ultraq.thymeleaf', name: 'thymeleaf-layout-dialect', version: '2.4.1'
+    implementation 'org.webjars:jquery:3.6.0'
     compile("org.springframework.boot:spring-boot-starter-web")
-    testCompile('org.springframework.boot:spring-boot-starter-test')
-    testCompile('com.jayway.jsonpath:json-path')
     compile("org.springframework.boot:spring-boot-starter-thymeleaf")
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
     compile 'org.springframework.boot:spring-boot-starter-data-jpa'
     compile 'mysql:mysql-connector-java'
+    compile 'org.springframework.boot:spring-boot-starter-security'
+    testCompile('org.springframework.boot:spring-boot-starter-test')
+    
+    testCompile('com.jayway.jsonpath:json-path')
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
 }
 
+task createTestFolder {
+    doLast {
+        def testDir = file('src/test/java')
+        if (!testDir.exists()) {
+            testDir.mkdirs()
+            println "Created test directory: ${testDir}"
+        } else {
+            println "Test directory already exists: ${testDir}"
+        }
+    }
+}
+
+// Haz que esta tarea se ejecute antes de la tarea 'test'
+test.dependsOn createTestFolder

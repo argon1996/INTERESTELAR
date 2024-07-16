@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="master">
+<head>
+    <title>Productos Faltantes</title>
+</head>
+<body>
+<main layout:fragment="contenido">
+    <div class="col-12">
+        <h2>Productos Faltantes</h2>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Código de Barras</th>
+                    <th>Existencia</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="producto : ${faltantes}">
+                    <td th:text="${producto.nombre}"></td>
+                    <td th:text="${producto.codigo}"></td>
+                    <td th:text="${producto.existencia}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>
